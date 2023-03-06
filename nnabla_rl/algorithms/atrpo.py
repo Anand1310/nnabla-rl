@@ -303,9 +303,9 @@ class ATRPO(Algorithm):
     def predict(
         self,
         observation: Union[np.ndarray, Dict[str, np.ndarray]],
-        # state: Optional[Tuple[np.ndarray, ...]] = None,
-        # episode_start: Optional[np.ndarray] = None,
-        deterministic: bool,
+        state: Optional[Tuple[np.ndarray, ...]] = None,
+        episode_start: Optional[np.ndarray] = None,
+        deterministic: bool = False,
     ) -> Tuple[np.ndarray, Optional[Tuple[np.ndarray, ...]]]:
         # TODO (GH/1): add support for RNN policies
         # if state is None:
