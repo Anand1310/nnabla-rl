@@ -257,7 +257,7 @@ class ATRPO(Algorithm):
 
     # my code
 
-    def set_training_mode(self, mode: bool) -> None:
+    def set_training_mode(self, mode: bool):
         """
         Put the policy in either training or evaluation mode.
         This affects certain modules, such as batch normalisation and dropout.
