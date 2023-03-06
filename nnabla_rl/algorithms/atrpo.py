@@ -296,7 +296,6 @@ class ATRPO(Algorithm):
         observation = obs_as_tensor(observation, self.device)
         return observation, vectorized_env
 
-    @abstractmethod
     def _predict(self, observation: th.Tensor, deterministic: bool = False) -> th.Tensor:
         pass
 
