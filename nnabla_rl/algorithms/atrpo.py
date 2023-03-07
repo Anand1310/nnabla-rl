@@ -257,85 +257,84 @@ class ATRPO(Algorithm):
 
     # my code
 
-    def set_training_mode(self, mode: bool):
-        """
-        Put the policy in either training or evaluation mode.
-        This affects certain modules, such as batch normalisation and dropout.
-        :param mode: if true, set to training mode, else set to evaluation mode
-        """
-        self.train(mode)
+    # def set_training_mode(self, mode: bool):
+    #     """
+    #     Put the policy in either training or evaluation mode.
+    #     This affects certain modules, such as batch normalisation and dropout.
+    #     :param mode: if true, set to training mode, else set to evaluation mode
+    #     """
+    #     self.train(mode)
 
-    def obs_to_tensor(self, observation: Union[np.ndarray, Dict[str, np.ndarray]]) -> Tuple[th.Tensor, bool]:
-        vectorized_env = False
-        if isinstance(observation, dict):
-            # need to copy the dict as the dict in VecFrameStack will become a torch tensor
-            observation = copy.deepcopy(observation)
-            for key, obs in observation.items():
-                obs_space = self.observation_space.spaces[key]
-                if is_image_space(obs_space):
-                    obs_ = maybe_transpose(obs, obs_space)
-                else:
-                    obs_ = np.array(obs)
-                vectorized_env = vectorized_env or is_vectorized_observation(obs_, obs_space)
-                # Add batch dimension if needed
-                observation[key] = obs_.reshape((-1,) + self.observation_space[key].shape)
-        elif is_image_space(self.observation_space):
-            # Handle the different cases for images
-            # as PyTorch use channel first format
-            observation = maybe_transpose(observation, self.observation_space)
+    # def obs_to_tensor(self, observation: Union[np.ndarray, Dict[str, np.ndarray]]) -> Tuple[th.Tensor, bool]:
+    #     vectorized_env = False
+    #     if isinstance(observation, dict):
+    #         # need to copy the dict as the dict in VecFrameStack will become a torch tensor
+    #         observation = copy.deepcopy(observation)
+    #         for key, obs in observation.items():
+    #             obs_space = self.observation_space.spaces[key]
+    #             if is_image_space(obs_space):
+    #                 obs_ = maybe_transpose(obs, obs_space)
+    #             else:
+    #                 obs_ = np.array(obs)
+    #             vectorized_env = vectorized_env or is_vectorized_observation(obs_, obs_space)
+    #             # Add batch dimension if needed
+    #             observation[key] = obs_.reshape((-1,) + self.observation_space[key].shape)
+    #     elif is_image_space(self.observation_space):
+    #         # Handle the different cases for images
+    #         # as PyTorch use channel first format
+    #         observation = maybe_transpose(observation, self.observation_space)
 
-        else:
-            observation = np.array(observation)
+    #     else:
+    #         observation = np.array(observation)
 
-        if not isinstance(observation, dict):
-            # Dict obs need to be handled separately
-            vectorized_env = is_vectorized_observation(observation, self.observation_space)
-            # Add batch dimension if needed
-            observation = observation.reshape((-1,) + self.observation_space.shape)
+    #     if not isinstance(observation, dict):
+    #         # Dict obs need to be handled separately
+    #         vectorized_env = is_vectorized_observation(observation, self.observation_space)
+    #         # Add batch dimension if needed
+    #         observation = observation.reshape((-1,) + self.observation_space.shape)
 
-        observation = obs_as_tensor(observation, self.device)
-        return observation, vectorized_env
+    #     observation = obs_as_tensor(observation, self.device)
+    #     return observation, vectorized_env
 
-    @abstractmethod
-    def _predict(self, observation: th.Tensor, deterministic: bool = False) -> th.Tensor:
-        pass
+    # def _predict(self, observation: th.Tensor, deterministic: bool = False) -> th.Tensor:
+    #     return self.get_distribution(observation).get_actions(deterministic=deterministic)
 
-    def predict(
-        self,
-        observation: Union[np.ndarray, Dict[str, np.ndarray]],
-        state: Optional[Tuple[np.ndarray, ...]] = None,
-        episode_start: Optional[np.ndarray] = None,
-        deterministic: bool = False,
-    ) -> Tuple[np.ndarray, Optional[Tuple[np.ndarray, ...]]]:
-        # TODO (GH/1): add support for RNN policies
-        # if state is None:
-        #     state = self.initial_state
-        # if episode_start is None:
-        #     episode_start = [False for _ in range(self.n_envs)]
-        # Switch to eval mode (this affects batch norm / dropout)
-        self.set_training_mode(False)
+    # def predict(
+    #     self,
+    #     observation: Union[np.ndarray, Dict[str, np.ndarray]],
+    #     state: Optional[Tuple[np.ndarray, ...]] = None,
+    #     episode_start: Optional[np.ndarray] = None,
+    #     deterministic: bool = False,
+    # ) -> Tuple[np.ndarray, Optional[Tuple[np.ndarray, ...]]]:
+    #     # TODO (GH/1): add support for RNN policies
+    #     # if state is None:
+    #     #     state = self.initial_state
+    #     # if episode_start is None:
+    #     #     episode_start = [False for _ in range(self.n_envs)]
+    #     # Switch to eval mode (this affects batch norm / dropout)
+    #     self.set_training_mode(False)
 
-        observation, vectorized_env = self.obs_to_tensor(observation)
+    #     observation, vectorized_env = self.obs_to_tensor(observation)
 
-        with th.no_grad():
-            actions = self._predict(observation, deterministic=deterministic)
-        # Convert to numpy, and reshape to the original action shape
-        actions = actions.cpu().numpy().reshape((-1,) + self.action_space.shape)
+    #     with th.no_grad():
+    #         actions = self._predict(observation, deterministic=deterministic)
+    #     # Convert to numpy, and reshape to the original action shape
+    #     actions = actions.cpu().numpy().reshape((-1,) + self.action_space.shape)
 
-        if isinstance(self.action_space, spaces.Box):
-            if self.squash_output:
-                # Rescale to proper domain when using squashing
-                actions = self.unscale_action(actions)
-            else:
-                # Actions could be on arbitrary scale, so clip the actions to avoid
-                # out of bound error (e.g. if sampling from a Gaussian distribution)
-                actions = np.clip(actions, self.action_space.low, self.action_space.high)
+    #     if isinstance(self.action_space, spaces.Box):
+    #         if self.squash_output:
+    #             # Rescale to proper domain when using squashing
+    #             actions = self.unscale_action(actions)
+    #         else:
+    #             # Actions could be on arbitrary scale, so clip the actions to avoid
+    #             # out of bound error (e.g. if sampling from a Gaussian distribution)
+    #             actions = np.clip(actions, self.action_space.low, self.action_space.high)
 
-        # Remove batch dimension if needed
-        if not vectorized_env:
-            actions = actions.squeeze(axis=0)
+    #     # Remove batch dimension if needed
+    #     if not vectorized_env:
+    #         actions = actions.squeeze(axis=0)
 
-        return actions, state
+    #     return actions, state
     
 
     ###################################################
