@@ -252,7 +252,11 @@ class ATRPO(Algorithm):
         with nn.context_scope(context.get_nnabla_context(self._config.gpu_id)):
             action, _ = self._evaluation_action_selector(state,  begin_of_episode=begin_of_episode)
             return action
-        
+    @eval_api
+    def predict(self, state, *, begin_of_episode=False, extra_info={}):
+        with nn.context_scope(context.get_nnabla_context(self._config.gpu_id)):
+            action,ss = self._evaluation_action_selector(state,  begin_of_episode=begin_of_episode)
+            return action,ss
     ##################################################
 
     # my code
