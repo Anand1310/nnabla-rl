@@ -254,7 +254,7 @@ class ATRPO(Algorithm):
             return action
         
     @eval_api
-    def predict(self, state,deterministic=True, *, begin_of_episode=False, extra_info={}):
+    def predict2(self, state,deterministic=True, *, begin_of_episode=False, extra_info={}):
         with nn.context_scope(context.get_nnabla_context(self._config.gpu_id)):
             action,ss = self._evaluation_action_selector(state,  begin_of_episode=begin_of_episode)
             return action,ss
